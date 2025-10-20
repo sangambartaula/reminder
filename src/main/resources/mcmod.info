@@ -1,0 +1,16 @@
+[
+{
+  "modid": "reminder",
+  "name": "Reminder Mod",
+  "description": "Reminds you of tasks at certain times with title popups and sounds.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["sangambartaula"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
