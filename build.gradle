@@ -1,12 +1,14 @@
 buildscript {
     repositories {
-        jcenter()
-        maven { url = "https://maven.minecraftforge.net/" }
+        mavenCentral()
+        maven { url = "https://repo1.maven.org/maven2" }
+        maven { url = "https://files.minecraftforge.net/maven" }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
     }
 }
+
 apply plugin: 'net.minecraftforge.gradle.forge'
 
 version = "1.0"
@@ -16,6 +18,11 @@ archivesBaseName = "reminder"
 sourceCompatibility = targetCompatibility = '1.8'
 compileJava {
     sourceCompatibility = targetCompatibility = '1.8'
+}
+
+repositories {
+    mavenCentral()
+    maven { url = "https://files.minecraftforge.net/maven" }
 }
 
 minecraft {
