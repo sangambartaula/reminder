@@ -16,7 +16,11 @@ public class ReminderOverlay extends Gui {
     
     private Reminder activeReminder = null;
     private long soundTimer = 0;
-    private static final long SOUND_INTERVAL = 2000; // Play sound every 2 seconds
+    private long reminderStartTime = 0;
+    private long lastPlayerInputTime = 0;
+    private boolean isAFK = false;
+    private static final long SOUND_INTERVAL = 300; // Play sound every 300ms
+    private static final long AFK_THRESHOLD = 10000; // 10 seconds
     private boolean registered = false;
     
     private ReminderOverlay() {}
@@ -25,6 +29,9 @@ public class ReminderOverlay extends Gui {
         if (activeReminder == null) {
             activeReminder = reminder;
             soundTimer = System.currentTimeMillis();
+            reminderStartTime = System.currentTimeMillis();
+            lastPlayerInputTime = System.currentTimeMillis();
+            isAFK = false;
             playReminderSound();
             
             if (!registered) {
@@ -36,6 +43,7 @@ public class ReminderOverlay extends Gui {
     
     public void dismiss() {
         activeReminder = null;
+        isAFK = false;
         if (registered) {
             MinecraftForge.EVENT_BUS.unregister(this);
             registered = false;
@@ -54,9 +62,26 @@ public class ReminderOverlay extends Gui {
         int width = sr.getScaledWidth();
         int height = sr.getScaledHeight();
         
-        // Play repeating sound
         long currentTime = System.currentTimeMillis();
-        if (currentTime - soundTimer >= SOUND_INTERVAL) {
+        
+        // Check for player input (keyboard or mouse movement)
+        if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_W) || 
+            Keyboard.isKeyDown(Keyboard.KEY_A) || Keyboard.isKeyDown(Keyboard.KEY_S) || 
+            Keyboard.isKeyDown(Keyboard.KEY_D) || Mouse.getDX() != 0 || Mouse.getDY() != 0) {
+            lastPlayerInputTime = currentTime;
+            if (isAFK) {
+                isAFK = false;
+                soundTimer = currentTime; // Reset sound timer when coming back
+            }
+        }
+        
+        // Check if AFK (no input for 10 seconds)
+        if (currentTime - lastPlayerInputTime >= AFK_THRESHOLD) {
+            isAFK = true;
+        }
+        
+        // Play repeating sound only if not AFK
+        if (!isAFK && currentTime - soundTimer >= SOUND_INTERVAL) {
             playReminderSound();
             soundTimer = currentTime;
         }
@@ -70,7 +95,7 @@ public class ReminderOverlay extends Gui {
         drawRect(0, 0, width, height, 0x99000000);
         
         // Draw title text
-        String title = "REMINDER!";
+        String title = isAFK ? "REMINDER (AFK MODE)" : "REMINDER!";
         int titleWidth = mc.fontRendererObj.getStringWidth(title);
         mc.fontRendererObj.drawStringWithShadow(title, (width - titleWidth) / 2, height / 2 - 50, 0xFFFF55);
         
@@ -83,46 +108,40 @@ public class ReminderOverlay extends Gui {
         GlStateManager.popMatrix();
         
         // Draw dismiss button
-        int buttonWidth = 100;
+        int buttonWidth = 140;
         int buttonHeight = 20;
         int buttonX = (width - buttonWidth) / 2;
         int buttonY = height / 2 + 30;
         
         drawRect(buttonX, buttonY, buttonX + buttonWidth, buttonY + buttonHeight, 0xFFAA0000);
-        String buttonText = "Dismiss (Click)";
+        String keyName = Keyboard.getKeyName(KeyBindings.dismissReminder.getKeyCode());
+        String buttonText = "Dismiss (Click [" + keyName + "])";
         int buttonTextWidth = mc.fontRendererObj.getStringWidth(buttonText);
         mc.fontRendererObj.drawStringWithShadow(buttonText, buttonX + (buttonWidth - buttonTextWidth) / 2, buttonY + 6, 0xFFFFFF);
         
-        // Handle mouse click
+        // Check for mouse click
         if (Mouse.isButtonDown(0)) {
-            int mouseX = Mouse.getX() * width / mc.displayWidth;
-            int mouseY = height - Mouse.getY() * height / mc.displayHeight - 1;
-            
-            if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth && mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
+            if (isMouseOverButton(buttonX, buttonY, buttonWidth, buttonHeight)) {
                 ReminderEventHandler.dismissReminder();
             }
         }
+    }
+    
+    private boolean isMouseOverButton(int x, int y, int width, int height) {
+        Minecraft mc = Minecraft.getMinecraft();
+        ScaledResolution sr = new ScaledResolution(mc);
+        int scale = sr.getScaleFactor();
         
-        // Handle keyboard dismiss (ESC or ENTER)
-        if (Keyboard.isKeyDown(Keyboard.KEY_RETURN) || Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
-            try {
-                Thread.sleep(200); // Debounce
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            ReminderEventHandler.dismissReminder();
-        }
+        int mouseX = Mouse.getX() / scale;
+        int mouseY = (mc.displayHeight - Mouse.getY()) / scale;
         
-        GlStateManager.depthMask(true);
-        GlStateManager.enableDepth();
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
     }
     
     private void playReminderSound() {
         Minecraft mc = Minecraft.getMinecraft();
-        if (mc.theWorld != null && mc.thePlayer != null) {
-            mc.theWorld.playSound(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ, 
-                "note.pling", 1.0F, 1.0F, false);
+        if (mc.thePlayer != null) {
+            mc.thePlayer.playSound("note.pling", 1.0F, 1.0F);
         }
     }
 }
