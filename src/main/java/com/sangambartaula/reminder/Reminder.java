@@ -54,4 +54,12 @@ public class Reminder implements Serializable {
     public void reset(long currentTime) {
         this.triggerTime = currentTime + intervalMillis;
     }
+    
+    /**
+     * Sets the trigger time to now + millis without changing intervalMillis.
+     * This allows setting a custom countdown while preserving the original interval for future cycles.
+     */
+    public void setTriggerTimeFromNow(long millis) {
+        this.triggerTime = System.currentTimeMillis() + millis;
+    }
 }
