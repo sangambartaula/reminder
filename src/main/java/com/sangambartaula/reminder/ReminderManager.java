@@ -37,11 +37,11 @@ public class ReminderManager {
             if (reminder.shouldTrigger(currentTime)) {
                 ReminderEventHandler.triggerReminder(reminder);
                 
-                if (reminder.isRecurring()) {
-                    reminder.reset(currentTime);
-                } else {
+                if (!reminder.isRecurring()) {
                     iterator.remove();
                 }
+                // Note: Recurring reminders are reset at dismiss time in ReminderEventHandler.dismissReminder()
+                // This ensures the timer resets from when the user actually dismisses, not when it triggered
             }
         }
         saveReminders();
@@ -66,6 +66,31 @@ public class ReminderManager {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
             reminders = new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Finds a reminder by task name (case-insensitive).
+     * @param name The task name to search for
+     * @return The matching Reminder, or null if not found
+     */
+    public Reminder findReminderByName(String name) {
+        for (Reminder reminder : reminders) {
+            if (reminder.getTaskName().equalsIgnoreCase(name)) {
+                return reminder;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Resets a reminder to its full interval from the current time.
+     * @param reminder The reminder to reset
+     */
+    public void resetReminderToFullInterval(Reminder reminder) {
+        if (reminder != null) {
+            reminder.reset(System.currentTimeMillis());
+            saveReminders();
         }
     }
 }

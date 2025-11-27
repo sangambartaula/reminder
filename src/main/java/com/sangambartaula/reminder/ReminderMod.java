@@ -24,6 +24,7 @@ public class ReminderMod {
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(new ReminderEventHandler());
         MinecraftForge.EVENT_BUS.register(new KeyInputHandler());
+        MinecraftForge.EVENT_BUS.register(new ChatMessageHandler());
         ClientCommandHandler.instance.registerCommand(new ReminderCommand());
     }
 }

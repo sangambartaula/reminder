@@ -43,6 +43,11 @@ public class ReminderEventHandler {
     }
     
     public static void dismissReminder() {
+        if (currentReminder != null && currentReminder.isRecurring()) {
+            // Reset recurring reminder from dismiss time, not trigger time
+            currentReminder.reset(System.currentTimeMillis());
+            ReminderManager.INSTANCE.saveReminders();
+        }
         currentReminder = null;
         ReminderOverlay.INSTANCE.dismiss();
     }
