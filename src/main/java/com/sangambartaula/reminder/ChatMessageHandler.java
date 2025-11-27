@@ -15,14 +15,15 @@ public class ChatMessageHandler {
     
     // Regex pattern for Motes collected message: "You earned 30,000 Motes in this match!"
     private static final Pattern MOTES_COLLECTED_PATTERN = Pattern.compile(
-        "You earned .*?(\\d{1,3}(,\\d{3})*|\\d+) Motes.*in this match",
+        "You earned [\\d,]+ Motes.*in this match",
         Pattern.CASE_INSENSITIVE
     );
     
     // Regex pattern for SPLIT/Cooldown message: "SPLIT! You need to wait 45m before you can play again."
     // Time format can be: 45m, 1h 59m, 1h, etc.
+    // Groups: 1 = hours (digits only), 2 = minutes (digits only)
     private static final Pattern SPLIT_COOLDOWN_PATTERN = Pattern.compile(
-        "SPLIT!.*You need to wait (\\d+h\\s*)?(\\d+m)? before you can play again",
+        "SPLIT!.*You need to wait (?:(\\d+)h\\s*)?(?:(\\d+)m)? before you can play again",
         Pattern.CASE_INSENSITIVE
     );
     
@@ -94,8 +95,8 @@ public class ChatMessageHandler {
     
     /**
      * Parses time from the SPLIT matcher.
-     * Group 1: hours part (e.g., "1h " or null)
-     * Group 2: minutes part (e.g., "59m" or null)
+     * Group 1: hours (digits only, e.g., "1" or null)
+     * Group 2: minutes (digits only, e.g., "59" or null)
      */
     private long parseTimeFromMatcher(Matcher matcher) {
         long totalMillis = 0;
@@ -103,20 +104,12 @@ public class ChatMessageHandler {
         String hoursStr = matcher.group(1);
         String minutesStr = matcher.group(2);
         
-        if (hoursStr != null) {
-            // Extract number from "1h " or "1h"
-            String hourNum = hoursStr.replaceAll("[^0-9]", "");
-            if (!hourNum.isEmpty()) {
-                totalMillis += Long.parseLong(hourNum) * 60 * 60 * 1000;
-            }
+        if (hoursStr != null && !hoursStr.isEmpty()) {
+            totalMillis += Long.parseLong(hoursStr) * 60 * 60 * 1000;
         }
         
-        if (minutesStr != null) {
-            // Extract number from "59m" or "45m"
-            String minuteNum = minutesStr.replaceAll("[^0-9]", "");
-            if (!minuteNum.isEmpty()) {
-                totalMillis += Long.parseLong(minuteNum) * 60 * 1000;
-            }
+        if (minutesStr != null && !minutesStr.isEmpty()) {
+            totalMillis += Long.parseLong(minutesStr) * 60 * 1000;
         }
         
         return totalMillis;
