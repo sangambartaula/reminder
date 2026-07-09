@@ -1,0 +1,23 @@
+{
+	"schemaVersion": 1,
+	"id": "reminder",
+	"version": "${version}",
+	"name": "Reminder Mod",
+	"description": "Client-side reminder mod with overlay notifications and chat-based timer sync.",
+	"authors": [
+		"Sangam Bartaula"
+	],
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.sangambartaula.reminder.ReminderModClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
